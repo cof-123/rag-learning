@@ -1,0 +1,5 @@
+Hello RAG!
+
+This is my first document.
+
+I am learning Retrieval-Augmented Generation.

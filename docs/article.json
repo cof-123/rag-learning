@@ -1,0 +1,6 @@
+{
+  "title": "RAG Introduction",
+  "source": "docs/article.txt",
+  "content": "Hello RAG!\n\nThis is my first document.\n\nI am learning Retrieval-Augmented Generation.",
+  "character_count": 85
+}
