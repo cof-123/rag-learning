@@ -1,0 +1,16 @@
+[
+  {
+    "title": "article",
+    "source": "docs/article.txt",
+    "file_type": ".txt",
+    "content": "Hello RAG!\n\nThis is my first document.\n\nI am learning Retrieval-Augmented Generation.",
+    "character_count": 85
+  },
+  {
+    "title": "sample",
+    "source": "docs/sample.md",
+    "file_type": ".md",
+    "content": "# Enterprise Knowledge Base\n\nRAG combines retrieval with large language models.\n\nIt can provide external knowledge to the model.",
+    "character_count": 128
+  }
+]
