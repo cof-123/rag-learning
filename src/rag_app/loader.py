@@ -1,7 +1,12 @@
+from importlib.resources import path
 from pathlib import Path
+from pypdf import PdfReader
 
-
-SUPPORTED_SUFFIXES = {".txt", ".md"}
+SUPPORTED_SUFFIXES = {
+    ".txt",
+    ".md",
+    ".pdf",
+}
 
 
 class UnsupportedFileTypeError(Exception):
@@ -22,8 +27,11 @@ def load_text(file_path: str | Path) -> str:
         raise UnsupportedFileTypeError(
             f"不支持的文件类型：{path.suffix or '无扩展名'}"
         )
-
+    if path.suffix.lower() == ".pdf":
+        return load_pdf(path)
+    
     return path.read_text(encoding="utf-8")
+
 
 
 def find_documents(directory: str | Path) -> list[Path]:
@@ -41,3 +49,20 @@ def find_documents(directory: str | Path) -> list[Path]:
         for path in root.rglob("*")
         if path.is_file() and path.suffix.lower() in SUPPORTED_SUFFIXES
     )
+
+def load_pdf(file_path: str | Path) -> str:
+    """读取PDF文本。"""
+
+    path = Path(file_path)
+
+    reader = PdfReader(path)
+
+    texts = []
+
+    for page in reader.pages:
+        page_text = page.extract_text()
+
+        if page_text:
+            texts.append(page_text)
+
+    return "\n".join(texts)
