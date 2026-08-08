@@ -3,6 +3,8 @@ from pathlib import Path
 from .cleaner import clean_text
 from .exporter import save_documents_as_json
 from .loader import find_documents, load_text
+from .models import Document
+from dataclasses import asdict
 
 
 def build_document(file_path: Path) -> dict:
@@ -10,13 +12,13 @@ def build_document(file_path: Path) -> dict:
     raw_text = load_text(file_path)
     cleaned_text = clean_text(raw_text)
 
-    return {
-        "title": file_path.stem,
-        "source": file_path.as_posix(),
-        "file_type": file_path.suffix.lower(),
-        "content": cleaned_text,
-        "character_count": len(cleaned_text),
-    }
+    return Document(
+        title=file_path.stem,
+        source=file_path.as_posix(),
+        file_type=file_path.suffix.lower(),
+        content=cleaned_text,
+        character_count=len(cleaned_text),
+    )
 
 class UnsupportedFileTypeError(ValueError):
     """文件类型不受支持。"""
@@ -45,7 +47,15 @@ def main() -> None:
             )
             print(f"[失败] {file_path}：{error}")
 
-    save_documents_as_json(documents, output_path)
+    json_documents = [
+    asdict(document)
+    for document in documents
+    ]
+
+    save_documents_as_json(
+    json_documents,
+    output_path,
+    )
 
     print()
     print(f"成功处理：{len(documents)} 个文件")
