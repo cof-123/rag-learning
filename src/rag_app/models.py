@@ -8,3 +8,10 @@ class Document:
     file_type: str
     content: str
     character_count: int
+
+
+@dataclass
+class Chunk:
+    content: str
+    chunk_id: int
+    source: str

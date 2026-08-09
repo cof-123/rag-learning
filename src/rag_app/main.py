@@ -5,9 +5,11 @@ from .exporter import save_documents_as_json
 from .loader import find_documents, load_text
 from .models import Document
 from dataclasses import asdict
+from .splitter import split_document
+from .chunk_exporter import save_chunks_as_json
 
 
-def build_document(file_path: Path) -> dict:
+def build_document(file_path: Path) -> Document:
     """读取、清洗并构造统一文档结构。"""
     raw_text = load_text(file_path)
     cleaned_text = clean_text(raw_text)
@@ -29,14 +31,23 @@ def main() -> None:
 
     file_paths = find_documents(source_directory)
 
-    documents: list[dict] = []
+    documents: list[Document] = []
     failed_files: list[dict] = []
+    all_chunks = []
 
     for file_path in file_paths:
         try:
             document = build_document(file_path)
             documents.append(document)
             print(f"[成功] {file_path}")
+            chunks = split_document(
+            document,
+            chunk_size=200,
+            overlap=50,
+        )
+            all_chunks.extend(chunks)
+            for chunk in chunks:
+                print(chunk)
 
         except (OSError, UnicodeError, ValueError) as error:
             failed_files.append(
@@ -48,14 +59,19 @@ def main() -> None:
             print(f"[失败] {file_path}：{error}")
 
     json_documents = [
-    asdict(document)
-    for document in documents
+        asdict(document)
+        for document in documents
     ]
 
     save_documents_as_json(
-    json_documents,
-    output_path,
-    )
+        json_documents,
+        output_path,
+        )
+
+    save_chunks_as_json(
+    all_chunks,
+    "output/chunks.json",
+)
 
     print()
     print(f"成功处理：{len(documents)} 个文件")
