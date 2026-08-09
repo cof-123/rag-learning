@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+from typing import Optional
 
 @dataclass
 class Document:
@@ -10,8 +10,10 @@ class Document:
     character_count: int
 
 
+
 @dataclass
 class Chunk:
     content: str
     chunk_id: int
     source: str
+    embedding: Optional[list[float]] = None
