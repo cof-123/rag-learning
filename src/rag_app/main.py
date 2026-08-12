@@ -7,6 +7,9 @@ from .models import Document
 from dataclasses import asdict
 from .splitter import split_document
 from .chunk_exporter import save_chunks_as_json
+from .embedding import EmbeddingModel, embed_chunks
+from .vector_store import VectorStore
+from .retriever import Retriever
 
 
 def build_document(file_path: Path) -> Document:
@@ -46,9 +49,16 @@ def main() -> None:
             overlap=50,
         )
             all_chunks.extend(chunks)
+            embedding_model = EmbeddingModel()
+            
+            all_chunks = embed_chunks(
+                all_chunks,
+                embedding_model,
+            )
             for chunk in chunks:
                 print(chunk)
 
+            
         except (OSError, UnicodeError, ValueError) as error:
             failed_files.append(
                 {
@@ -57,6 +67,41 @@ def main() -> None:
                 }
             )
             print(f"[失败] {file_path}：{error}")
+
+        embedding_model = EmbeddingModel()
+
+    all_chunks = embed_chunks(
+        all_chunks,
+        embedding_model,
+    )
+
+
+    vector_store = VectorStore(
+        dimension=512
+    )
+
+    vector_store.add(
+        all_chunks
+    )
+
+
+    retriever = Retriever(
+        embedding_model,
+        vector_store,
+    )
+
+
+    results = retriever.search(
+        "什么是RAG",
+        top_k=3,
+    )
+
+
+    for chunk in results:
+        print(
+            "检索结果:",
+            chunk.content
+        )
 
     json_documents = [
         asdict(document)
