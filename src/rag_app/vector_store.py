@@ -62,3 +62,35 @@ class VectorStore:
             )
 
         return results
+    
+    def save(
+        self,
+        path: str,
+        ) -> None:
+        """保存FAISS索引。"""
+
+        faiss.write_index(
+            self.index,
+            path,
+        )
+
+    @classmethod
+    def load(
+        cls,
+        path: str,
+        chunks: list[Chunk],
+    ) -> "VectorStore":
+        """加载FAISS索引。"""
+
+        index = faiss.read_index(
+            path
+        )
+
+        store = cls(
+            dimension=index.d
+        )
+
+        store.index = index
+        store.chunks = chunks
+
+        return store

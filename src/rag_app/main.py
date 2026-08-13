@@ -1,128 +1,43 @@
 from pathlib import Path
-
-from .cleaner import clean_text
-from .exporter import save_documents_as_json
-from .loader import find_documents, load_text
-from .models import Document
-from dataclasses import asdict
-from .splitter import split_document
-from .chunk_exporter import save_chunks_as_json
-from .embedding import EmbeddingModel, embed_chunks
-from .vector_store import VectorStore
-from .retriever import Retriever
-
-
-def build_document(file_path: Path) -> Document:
-    """读取、清洗并构造统一文档结构。"""
-    raw_text = load_text(file_path)
-    cleaned_text = clean_text(raw_text)
-
-    return Document(
-        title=file_path.stem,
-        source=file_path.as_posix(),
-        file_type=file_path.suffix.lower(),
-        content=cleaned_text,
-        character_count=len(cleaned_text),
-    )
-
-class UnsupportedFileTypeError(ValueError):
-    """文件类型不受支持。"""
-
-def main() -> None:
-    source_directory = Path("docs")
-    output_path = Path("output/documents.json")
-
-    file_paths = find_documents(source_directory)
-
-    documents: list[Document] = []
-    failed_files: list[dict] = []
-    all_chunks = []
-
-    for file_path in file_paths:
-        try:
-            document = build_document(file_path)
-            documents.append(document)
-            print(f"[成功] {file_path}")
-            chunks = split_document(
-            document,
-            chunk_size=200,
-            overlap=50,
-        )
-            all_chunks.extend(chunks)
-            embedding_model = EmbeddingModel()
-            
-            all_chunks = embed_chunks(
-                all_chunks,
-                embedding_model,
-            )
-            for chunk in chunks:
-                print(chunk)
-
-            
-        except (OSError, UnicodeError, ValueError) as error:
-            failed_files.append(
-                {
-                    "source": file_path.as_posix(),
-                    "error": str(error),
-                }
-            )
-            print(f"[失败] {file_path}：{error}")
-
-        embedding_model = EmbeddingModel()
-
-    all_chunks = embed_chunks(
-        all_chunks,
-        embedding_model,
-    )
-
-
-    vector_store = VectorStore(
-        dimension=512
-    )
-
-    vector_store.add(
-        all_chunks
-    )
-
-
-    retriever = Retriever(
-        embedding_model,
-        vector_store,
-    )
-
-
-    results = retriever.search(
-        "什么是RAG",
-        top_k=3,
-    )
-
-
-    for chunk in results:
-        print(
-            "检索结果:",
-            chunk.content
-        )
-
-    json_documents = [
-        asdict(document)
-        for document in documents
-    ]
-
-    save_documents_as_json(
-        json_documents,
-        output_path,
-        )
-
-    save_chunks_as_json(
-    all_chunks,
-    "output/chunks.json",
+import argparse
+from .knowledge_base import (
+    build_knowledge_base,
+    query_knowledge_base,
 )
 
-    print()
-    print(f"成功处理：{len(documents)} 个文件")
-    print(f"处理失败：{len(failed_files)} 个文件")
-    print(f"输出位置：{output_path}")
 
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="RAG knowledge base command line tool"
+    )
+
+    parser.add_argument(
+        "command",
+        choices=["build", "query"],
+        help="执行 build 构建知识库，或 query 查询知识库",
+    )
+
+    parser.add_argument(
+        "query",
+        nargs="?",
+        help="查询问题，仅 query 模式需要",
+    )
+
+    args = parser.parse_args()
+
+    if args.command == "build":
+        build_knowledge_base()
+
+    elif args.command == "query":
+        if not args.query:
+            parser.error(
+                "query 模式需要提供查询问题"
+            )
+
+        query_knowledge_base(
+            args.query,
+            top_k=3,
+        )
 
 if __name__ == "__main__":
     main()
