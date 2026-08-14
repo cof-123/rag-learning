@@ -25,3 +25,5 @@ venv/
 # Generated files
 
 output/
+
+.env
