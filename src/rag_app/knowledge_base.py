@@ -1,4 +1,6 @@
 from pathlib import Path
+
+from typer import prompt
 from .cleaner import clean_text
 from .exporter import save_documents_as_json
 from .loader import find_documents, load_text
@@ -10,6 +12,12 @@ from .embedding import EmbeddingModel, embed_chunks
 from .vector_store import VectorStore
 from .retriever import Retriever
 from .chunk_loader import load_chunks_from_json
+from .llm_client import LLMClient
+from .prompt import build_prompt
+from .config import (
+    OLLAMA_BASE_URL,
+    LLM_MODEL,
+)
 
 
 
@@ -103,7 +111,7 @@ def build_knowledge_base() -> None:
 def query_knowledge_base(
     query: str,
     top_k: int = 3,
-) -> None:
+) -> str:
     """加载已有知识库并执行检索。"""
 
     chunks = load_chunks_from_json(
@@ -127,7 +135,18 @@ def query_knowledge_base(
         top_k=top_k,
     )
 
-    for chunk in results:
-        print()
-        print("检索结果：")
-        print(chunk.content)
+    prompt = build_prompt(
+    query,
+    results,
+    )
+
+    llm_client = LLMClient(
+        base_url=OLLAMA_BASE_URL,
+        model=LLM_MODEL,
+    )
+    answer = llm_client.generate(
+    prompt
+    )
+
+    return answer
+

@@ -34,10 +34,13 @@ def main() -> None:
                 "query 模式需要提供查询问题"
             )
 
-        query_knowledge_base(
-            args.query,
-            top_k=3,
+        answer = query_knowledge_base(
+        args.query,
+        top_k=3,
         )
+
+    print("最终回答：")
+    print(answer)
 
 if __name__ == "__main__":
     main()
