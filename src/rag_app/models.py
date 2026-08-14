@@ -17,3 +17,8 @@ class Chunk:
     chunk_id: int
     source: str
     embedding: Optional[list[float]] = None
+
+@dataclass
+class SearchResult:
+    chunk: Chunk
+    score: float

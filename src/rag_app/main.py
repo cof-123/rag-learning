@@ -36,11 +36,10 @@ def main() -> None:
 
         answer = query_knowledge_base(
         args.query,
-        top_k=3,
         )
 
-    print("最终回答：")
-    print(answer)
+        print("最终回答：")
+        print(answer)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from typer import prompt
 from .cleaner import clean_text
 from .exporter import save_documents_as_json
 from .loader import find_documents, load_text
@@ -110,7 +109,7 @@ def build_knowledge_base() -> None:
 
 def query_knowledge_base(
     query: str,
-    top_k: int = 3,
+    top_k: int = 5,
 ) -> str:
     """加载已有知识库并执行检索。"""
 
@@ -130,14 +129,23 @@ def query_knowledge_base(
         vector_store,
     )
 
-    results = retriever.search(
+    search_results = retriever.search(
         query,
         top_k=top_k,
+        debug=True
     )
 
+    if not search_results:
+        return "知识库中没有找到足够相关的信息。"
+
+    chunks = [
+        result.chunk
+        for result in search_results
+    ]
+
     prompt = build_prompt(
-    query,
-    results,
+        query,
+        chunks,
     )
 
     llm_client = LLMClient(
@@ -147,6 +155,7 @@ def query_knowledge_base(
     answer = llm_client.generate(
     prompt
     )
+
 
     return answer
 

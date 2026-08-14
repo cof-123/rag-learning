@@ -1,7 +1,7 @@
 import faiss
 import numpy as np
 
-from .models import Chunk
+from .models import Chunk, SearchResult
 
 
 class VectorStore:
@@ -11,9 +11,9 @@ class VectorStore:
         self,
         dimension: int,
     ):
-        self.index = faiss.IndexFlatL2(
-            dimension
-        )
+        self.index = faiss.IndexFlatIP(
+        dimension
+    )
 
         self.chunks: list[Chunk] = []
 
@@ -32,6 +32,8 @@ class VectorStore:
             dtype="float32",
         )
 
+        faiss.normalize_L2(vectors)
+
         self.index.add(vectors)
 
         self.chunks.extend(chunks)
@@ -41,7 +43,7 @@ class VectorStore:
         self,
         query_vector,
         top_k: int = 3,
-    ) -> list[Chunk]:
+    ) -> list[SearchResult]:
         """搜索相似Chunk。"""
 
         query_vector = np.array(
@@ -49,16 +51,24 @@ class VectorStore:
             dtype="float32",
         )
 
-        distances, indices = self.index.search(
+        faiss.normalize_L2(query_vector)
+
+        scores, indices = self.index.search(
             query_vector,
             top_k,
         )
 
         results = []
 
-        for idx in indices[0]:
+        for score, idx in zip(
+            scores[0],
+            indices[0],
+        ):
             results.append(
-                self.chunks[idx]
+                SearchResult(
+                    chunk=self.chunks[idx],
+                    score=float(score),
+                )
             )
 
         return results
