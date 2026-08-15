@@ -1,11 +1,13 @@
 from pathlib import Path
-
-from .cleaner import clean_text
+from .cleaner import (
+    clean_text,
+    clean_pdf_text,
+)
 from .exporter import save_documents_as_json
 from .loader import find_documents, load_text
 from .models import Document
 from dataclasses import asdict
-from .splitter import split_document
+from .splitter import split_document_by_structure
 from .chunk_exporter import save_chunks_as_json
 from .embedding import EmbeddingModel, embed_chunks
 from .vector_store import VectorStore
@@ -19,11 +21,19 @@ from .config import (
 )
 
 
-
 def build_document(file_path: Path) -> Document:
     """读取、清洗并构造统一文档结构。"""
+
     raw_text = load_text(file_path)
-    cleaned_text = clean_text(raw_text)
+
+    if file_path.suffix.lower() == ".pdf":
+        cleaned_text = clean_pdf_text(
+            raw_text
+        )
+    else:
+        cleaned_text = clean_text(
+            raw_text
+        )
 
     return Document(
         title=file_path.stem,
@@ -32,6 +42,7 @@ def build_document(file_path: Path) -> Document:
         content=cleaned_text,
         character_count=len(cleaned_text),
     )
+
 def build_knowledge_base() -> None:
     """从 docs 构建并保存向量知识库。"""
 
@@ -54,10 +65,9 @@ def build_knowledge_base() -> None:
                 document
             )
 
-            chunks = split_document(
+            chunks = split_document_by_structure(
                 document,
-                chunk_size=200,
-                overlap=50,
+                max_chunk_size=400,
             )
 
             all_chunks.extend(
